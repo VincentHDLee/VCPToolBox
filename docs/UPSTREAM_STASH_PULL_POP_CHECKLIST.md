@@ -370,47 +370,113 @@ try { Invoke-WebRequest -Uri "http://127.0.0.1:6006/AdminPanel" -UseBasicParsing
 - [ ] `vcp-main` / `vcp-admin` 均为 `online`，无疯狂 restart
 - [ ] 主服务端口监听；`/health` 为 200 或 **401（鉴权）**
 - [ ] AdminPanel **200**
-- [ ] 错误日志无「立刻退出」级致命错误（缺可选依赖的 warn 可记录但不阻断）
+- [ ] **本轮启动**错误日志无「立刻退出」级致命错误（缺可选依赖的 warn 可记录但不阻断）
+- [ ] 若要推 fork：双进程日志门禁通过（见 §8.4）
 
 ### 8.3 失败时修复循环
 
-1. 读 `vcp-main-error.log` / `vcp-admin-error.log`
+1. 读 `vcp-main-error.log` / `vcp-admin-error.log`（路径见 §0 常用路径）
 2. 分类：配置键缺失 / 依赖缺失 / 端口占用 / 编码乱码 / 插件 fatal
-3. 修 → `npx pm2 restart ecosystem.config.js` → 再验证
+3. 修 → `npx pm2 restart ecosystem.config.js` 或整表重拉 → 再验证
 4. 仍失败：`npx pm2 stop all`，保留日志路径，升级排查（勿强推 fork）
 
 常见：
 
-| 现象         | 处理                                                |
-| ------------ | --------------------------------------------------- |
-| 端口占用     | `netstat -ano \| findstr :6005` 后结束占用或改 PORT |
-| admin 起不来 | 查 `ADMIN_PORT`、是否误解析多 PORT                  |
-| 插件缺模块   | 按需 `npm i <pkg>` 或暂时 `.block`                  |
-| 中文配置乱码 | 从 `.bak_*` 按 UTF-8 无 BOM 重建                    |
-| RSS 被杀循环 | 确认没有 `max_memory_restart`                       |
+| 现象         | 处理                                                                                               |
+| ------------ | -------------------------------------------------------------------------------------------------- |
+| 端口占用     | `netstat -ano \| findstr :6005` 后结束占用或改 PORT                                                |
+| admin 起不来 | 查 `ADMIN_PORT`、是否误解析多 PORT                                                                 |
+| 插件缺模块   | 按需 `npm i <pkg>` 或暂时 `.block`                                                                 |
+| 中文配置乱码 | 从 `.bak_*` 按 UTF-8 无 BOM 重建                                                                   |
+| RSS 被杀循环 | 确认没有 `max_memory_restart`                                                                      |
+| 天气城市 400 | 查根 `config.env` 的 `VarCity` 是否 mojibake；UTF-8 无 BOM 写回合法城市名后 `pm2 restart vcp-main` |
+| 日志混历史   | **先 `npx pm2 flush` 再 delete/start**，只审本轮启动                                               |
+
+### 8.4 推 fork 前：双进程日志门禁（HARD / SOFT）
+
+> 用户策略（2026-08-19）：**PM2 调试通过且两进程日志无硬错误，才考虑 push fork。**
+
+**务必先清空历史再启，否则会把旧 EADDRINUSE / 崩溃混进结论：**
+
+```powershell
+npx pm2 flush
+npx pm2 delete all
+npx pm2 start ecosystem.config.js
+Start-Sleep -Seconds 20
+npx pm2 status
+npx pm2 save
+# 再读 %USERPROFILE%\.pm2\logs\vcp-{main,admin}-{error,out}.log
+```
+
+| 级别                          | 判定（示例）                                                                                                                                                              | 是否挡 push                     |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| **HARD（进程级）**            | `UnhandledPromiseRejection` / `UncaughtException` / `EADDRINUSE` / `Error: listen` / `heap out of memory` / `SyntaxError` 导致起不来 / `Failed to start` / DB `malformed` | **挡** — 先修                   |
+| **功能降级（常被误标 HARD）** | 可选插件 `Cannot find module 'ssh2'`、缺邮件 SDK 等；主进程仍 online                                                                                                      | **不挡主服务**；记入 §14 待商议 |
+| **SOFT**                      | `ENOENT` 缺可选 json、外网 `ETIMEDOUT`、天气子接口失败、WARN                                                                                                              | **不挡**；按需修                |
+| **噪声**                      | PM2 控制台中文乱码、宿主 RAM 高但进程未 OOM                                                                                                                               | **不挡**                        |
+
+**本轮还应出现的正向信号：**
+
+- `[AgentAssistant Service] Config reloaded: N agents loaded.`（N 与本地 json 一致）
+- `[KnowledgeBase] ✅ System Ready` / Admin「管理面板地址」
+- 天气：城市查询 **无 400**（预警成功即可；空气质量超时另记）
+
+### 8.5 AA 生效自检
+
+```powershell
+# 改 Plugin/AgentAssistant/config.json 后：
+npx pm2 restart vcp-main
+npx pm2 logs vcp-main --lines 100 --nostream | Select-String -Pattern "agents loaded|AgentAssistant"
+```
+
+- 只改 `config.env` **不会**生效（见 §5.2.1）。
+- 名称字段禁止「引号 + 行尾注释」污染（错误迁移常见）。
 
 ---
 
 ## 9. 推送到 Fork
 
-**仅在启动验证通过后：**
+**仅在启动验证 + §8.4 日志门禁通过后：**
 
 ```powershell
 git status -sb
 git log origin/main..HEAD --oneline
+git diff --stat HEAD
 
-# 只推送已提交的上游同步结果；本地脏文件（config.env、私有 json）不要 commit
+# 只 add 明确要共享的路径；禁止盲 git add .
+# 只推送已提交内容；本地脏文件不要 commit
 git push origin main
-# 若使用 vcp-fork 同 URL，二者等价
 ```
+
+### 9.1 默认 **不要** commit / push 的路径
+
+| 路径                                               | 原因                                                                          |
+| -------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `config.env`、`**/config.env`、各类 `.bak_*`       | 密钥 / 本机环境（gitignore）                                                  |
+| `Plugin/AgentAssistant/config.json`                | **私有角色表**；注意：当前 **未必** 被 `.gitignore` 忽略，必须 **刻意不 add** |
+| `Plugin/AgentAssistant/config.env` 及 `*.bak_aa_*` | 镜像/备份；env 已 ignore，bak 也可能 untracked                                |
+| `Plugin/UserAuth/code.bin`                         | 本机认证产物                                                                  |
+| `Plugin/VCPBridgeServer/bridge-config.json`        | 本地桥接                                                                      |
+| `sarprompt.json` 等私货                            | 非上游共享                                                                    |
+| `Plugin/1PanelInfoProvider/`                       | 本地插件目录，推送前需用户确认                                                |
+
+### 9.2 默认可推 / 需确认
+
+| 路径                                             | 建议                                  |
+| ------------------------------------------------ | ------------------------------------- |
+| `docs/**`（清单、§5.2.1、问题台账、runlog）      | ✅ 默认可推                           |
+| 已 ff-merge 的 upstream 提交                     | ✅ 随 `main` 推                       |
+| `ecosystem.config.js`（无 `max_memory_restart`） | ⚠️ **待商议** — 是否共享本机 PM2 策略 |
+| `Plugin/PowerShellExecutor/config.env`           | ❌ 本地；仅 example 在仓内            |
 
 **检查项：**
 
-- [ ] 无密钥进入即将 push 的 commit
-- [ ] `origin/main` 与本地 `HEAD` 一致
+- [ ] §8.4 HARD 门禁通过
+- [ ] `git status` 中无密钥 / 私有 AA 角色表被 staged
+- [ ] `origin/main` 与本地 `HEAD` 一致（push 后）
 - [ ] 推送成功
 
-若有需要保留的 **非密钥** 本地提交（如 ecosystem 注释强化），单独 commit 后再 push，commit message 写清原因。
+若有需要保留的 **非密钥** 本地提交，单独 commit 后再 push，message 写清原因；**先问用户**再推 ecosystem / 本地插件。
 
 ---
 
@@ -501,11 +567,29 @@ git stash list
 ```text
  M ecosystem.config.js          # 本地无 max_memory_restart 策略
  M Plugin/UserAuth/code.bin
-?? Plugin/* 私有 config / 1Panel
+ M Plugin/PowerShellExecutor/config.env   # 本地补键，勿推
+?? Plugin/AgentAssistant/config.json      # 私有 44 agents — 勿推（未必 gitignore）
+?? Plugin/AgentAssistant/*.bak_aa_*
+?? Plugin/1PanelInfoProvider/
+?? Plugin/VCPBridgeServer/bridge-config.json
 ?? config.env.bak_*
 ?? sarprompt.json
 # config.env 永不提交
 ```
+
+### 11.5 本轮日志门禁结论（flush 后）
+
+| 文件                  | HARD 进程级        | 备注                                                           |
+| --------------------- | ------------------ | -------------------------------------------------------------- |
+| `vcp-main-error.log`  | 无崩溃/端口/未捕获 | 有功能降级：`ssh2`；SOFT：LightMemo ENOENT、空气质量 ETIMEDOUT |
+| `vcp-main-out.log`    | 0                  | System Ready / AA Initialized / 多服务 listening               |
+| `vcp-admin-error.log` | 0（空文件）        | 历史 EADDRINUSE 仅出现在 flush **前**，勿采信                  |
+| `vcp-admin-out.log`   | 0                  | AdminPanel 地址正常                                            |
+| HTTP                  | —                  | 6005/health **401**；6006/AdminPanel **200**                   |
+| AA                    | —                  | `Config reloaded: 44 agents loaded.`                           |
+| 天气                  | —                  | 城市 400 **已消失**；预警成功；AQI 超时另记                    |
+
+**门禁：通过 → 已允许 docs-only push。**
 
 ---
 
@@ -523,9 +607,11 @@ git rev-parse HEAD
 git stash pop
 npm install --registry=https://registry.npmmirror.com
 # pip 按需
+# 建议：npx pm2 flush → delete all → start（§8.4 门禁）
 npx pm2 start ecosystem.config.js
 npx pm2 status
-# 验证 HTTP 后：
+# 验证 HTTP + 双进程本轮日志无 HARD 后：
+# 只 add docs/等安全路径；勿 add AA config.json
 git push origin main
 ```
 
@@ -539,3 +625,59 @@ git push origin main
 | **VCPChat**    | 另仓 stash-pull；`npm start` | 客户端 CDS/DeepMemo；`npm run build` 仅编 Rust CDS，有预编译 exe 时本地可不 build |
 
 VCPChat 不在本清单默认范围内，除非用户明确要求同步前端。
+
+---
+
+## 14. 问题台账（已处理 / 待商议）
+
+> 同步与启动过程中踩过的坑。**已处理**可复用；**待商议**需用户拍板后再动。  
+> 更新日期：2026-08-19。
+
+### 14.1 已处理（Resolved）
+
+| ID  | 问题                                 | 根因 / 现象                                                            | 处理                                                                                            | 文档锚点          |
+| --- | ------------------------------------ | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------- |
+| R1  | 同步摘要漏报 AA 配置格式变更         | 上游 `8311f03c` 起 runtime 只读 `config.json`；README 仍写 env         | 写清 §5.2.1；摘要强制点名；本机迁入 44 agents                                                   | §5.2.1、§8.5      |
+| R2  | AA 短 json（~12）盖住长 env          | `migrateEnvToJson` **仅当 json 不存在**时跑；已有短 json 后改 env 无效 | 以长备份+HUAIJIN 重写 `config.json`；env 仅作镜像；`pm2 restart vcp-main` 见 `44 agents loaded` | §5.2.1            |
+| R3  | AA 名称字段污染                      | 迁移把行尾注释/多余引号写进 name                                       | 清洗后再写入 json                                                                               | §8.5              |
+| R4  | 模型策略                             | 旧 Pro / `gemini-3.1-pro` 不可用                                       | **全员** `gemini-3.7-flash`；ATHENA/JIYUXIN/MORPHEUS 留 `modelNote` 待新 Pro                    | 本地 json（勿推） |
+| R5  | 根 `VarCity` 乱码 → 天气城市 **400** | UTF-8 被错误写入/BOM 导致 mojibake                                     | UTF-8 **无 BOM** 写回 `VarCity=防城港`；`pm2 restart vcp-main`；城市 400 消失                   | §0、§8.3          |
+| R6  | PM2 日志误判                         | error 日志混入数月前 EADDRINUSE 等                                     | 门禁前 **`pm2 flush` → delete all → start**，只审本轮                                           | §8.4、§11.5       |
+| R7  | 推 fork 带私钥风险                   | AA `config.json` **未**在 gitignore                                    | §9.1 明确禁止 add；本次仅 push docs                                                             | §9.1              |
+| R8  | PSE 缺新键                           | 上游 v1.1.0 example 新增                                               | 本地 `config.env` 追加 `POWERSHELL_RETURN_MODE` / `VERBOSE_ERROR`（不提交）                     | §11               |
+| R9  | GitHub 直连失败                      | 代理端口关闭 / 443 不稳                                                | `ghfast.top` upstream-mirror fetch + ff-only                                                    | §3、§11           |
+| R10 | 编码 BOM                             | PS `Set-Content -Encoding utf8`                                        | 禁止；用 Node Buffer 或 `UTF8Encoding $false`                                                   | §0                |
+| R11 | LAN IP                               | 历史 `192.168.1.100`                                                   | 统一 `127.0.0.1` 回调/本地 API                                                                  | §0                |
+| R12 | PM2 冷启动死循环                     | `max_memory_restart` 误杀                                              | ecosystem **不写**该字段（本地保留）                                                            | §0、§9.2          |
+| R13 | docs 推送                            | 清单 + §5.2.1                                                          | `8e464072`、`e3a5bfb6` → origin main                                                            | §11               |
+
+### 14.2 待商议（Open / Decide）
+
+| ID  | 事项                                  | 现状                                             | 选项 / 建议                                                                                            | 优先级     |
+| --- | ------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ---------- |
+| O1  | **`ecosystem.config.js` 是否推 fork** | 本地无 `max_memory_restart`，与上游可能 diff     | A) 保持仅本地 B) commit 共享策略                                                                       | 中         |
+| O2  | **AA `config.json` 是否 gitignore**   | 未忽略，易误 add                                 | 建议在 `.gitignore` 增加 `Plugin/AgentAssistant/config.json`（及 bak）；需确认是否有人要共享公开角色表 | 高         |
+| O3  | **LinuxShellExecutor / `ssh2`**       | 缺模块，长待机/SSH 监控受限                      | `npm i ssh2` 或保持降级 / `.block`                                                                     | 低         |
+| O4  | **LightMemo `semantic_groups.json`**  | ENOENT，无查询扩展                               | 按 RAG 文档补文件或忽略                                                                                | 低         |
+| O5  | **天气空气质量 ETIMEDOUT**            | 打到 `198.18.1.1:443`（常见于代理/虚拟网卡路由） | 查系统代理/TUN；城市与预警已 OK 可暂缓                                                                 | 中         |
+| O6  | **VCPClawMail 等可选 SDK**            | 历史/按需缺邮件 SDK                              | 不用则 block；要用再装                                                                                 | 低         |
+| O7  | **PaperReader 仍 `.block`**           | 上游大更新但未启用                               | 需要 PDF 工作流时再启并测 CLI                                                                          | 低         |
+| O8  | **`Plugin/1PanelInfoProvider/`**      | untracked 本地插件                               | 推 fork？保留本地？删除？                                                                              | 中         |
+| O9  | **主机 RAM ~90%+**                    | 双进程+向量后偏高                                | 关不用插件 / 加内存 / 观察；**不要**用 max_memory_restart 硬杀                                         | 中         |
+| O10 | **代理 7897/7890**                    | 常关导致 git/部分 API 不稳                       | 固定「开发时开代理」或继续 ghfast                                                                      | 中         |
+| O11 | **FFmpeg PATH / AICodeWorker 路径**   | Windows 勿盲填 Linux 路径                        | 用到再配                                                                                               | 低         |
+| O12 | **旧 stash**                          | 如 `pre-upstream-sync-20260816`                  | `stash list` 审后 drop 或保留                                                                          | 低         |
+| O13 | **模型切回 Pro**                      | 三 agent 已 modelNote                            | 等官方可用新 Pro 后再改 `modelId`                                                                      | 低         |
+| O14 | **VCPChat**                           | 已另仓同步过；默认不推                           | 用户点名再动                                                                                           | —          |
+| O15 | **同步摘要质量**                      | 曾漏 AA 格式                                     | 每次摘要必须：新插件 + **破坏性配置** + 已启用插件 config diff                                         | 高（流程） |
+
+### 14.3 建议下次同步时多做的 30 秒检查
+
+```text
+1. git log PRE..POST --oneline + 扫 Plugin/*/ 新目录
+2. 对已启用插件：config.env.example / config.json 模板是否有新键
+3. 点名 AgentAssistant：config.json 是否存在、agents 数量是否符合预期
+4. 根 config.env：UTF-8 无 BOM；VarCity/回调 URL 抽查
+5. pm2 flush 后干净启动 → §8.4 门禁 → 再谈 push
+6. git status：AA json、code.bin、bridge、bak 永不 add
+```
