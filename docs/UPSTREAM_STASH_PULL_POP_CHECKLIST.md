@@ -242,6 +242,36 @@ Get-ChildItem Plugin -Recurse -Filter plugin-manifest.json.block | Select-Object
 3. 路径类键（Linux 绝对路径、GPU 工具）：**Windows 上勿盲填**，记入「待用户确认」
 4. 新插件默认：可先 `.block` 禁用，确认依赖后再启用
 
+### 5.2.1 AgentAssistant（AA）配置格式变更 — 必读
+
+> **Breaking change（上游 `8311f03c`，2026-04-10）：** AA 运行时配置从 **`config.env` 改为 `config.json` 为唯一真源**。
+> 这是用户最容易踩坑、同步摘要里**必须写明**的插件级变更。README 仍可能写 `config.env`，以代码为准。
+
+| 项           | 说明                                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------------- |
+| **真源**     | `Plugin/AgentAssistant/config.json`（`agents[]` + 委托/历史等字段）                               |
+| **加载**     | `loadAgentsFromLocalConfig()` **只读 json**                                                       |
+| **迁移**     | 启动时 `migrateEnvToJson()`：**仅当 json 不存在且 env 存在**时，把 env 一次性写成 json            |
+| **之后**     | 再改 `config.env` **不会生效**；日志甚至提示 env 可删除                                           |
+| **仓库**     | upstream **不提交**本地 `config.json` / `config.env`（私有角色表）；树内仅有 `config.env.example` |
+| **本机镜像** | 可保留 gitignore 的 `config.env` 作人工对照，但必须以 json 为准                                   |
+| **改完生效** | `npx pm2 restart vcp-main`，日志应出现 `Config reloaded: N agents loaded.`                        |
+
+**同步时检查清单：**
+
+- [ ] 是否存在 `config.json`？有则 diff 体积/agent 数，勿被「短 json + 长 env」误导
+- [ ] 若只有 env：让服务启动一次完成迁移，或手工把长配置迁入 json
+- [ ] 名称字段无引号/行尾注释污染（错误迁移常见）
+- [ ] 摘要中明确写出「AA 配置真源 = config.json」
+
+**近期 AA 功能变更（与配置格式分开）：**
+
+| 日期       | Commit     | 内容                                                              |
+| ---------- | ---------- | ----------------------------------------------------------------- |
+| 2026-08-15 | `6c24fa4b` | 委托任务直接调用 **Flowlock 心流锁**内核（`flowlockProtocol.js`） |
+| 2026-08-06 | `2b00d0d2` | 接入 reasoning→content 适配，清理思维链避免污染 AA 历史           |
+| 更早       | 多笔       | inject_tools、异步委托、积分、总线重试等（V2 起）                 |
+
 ### 5.3 Manifest 健康
 
 ```powershell
