@@ -11,6 +11,7 @@
 本文档体系旨在为后续 Agent 提供 VCPToolBox 仓库的**高保真、全覆盖、可追溯**的架构与实现细节，使其能够在不反复读取源码的前提下，准确理解系统的架构、功能、插件机制、配置语义与运行边界。
 
 **核心原则：**
+
 - ✅ 所有结论必须附证据定位（文件路径 + 行号/代码片段）
 - ✅ 已确认事实、推断结论、不确定项明确标注
 - ✅ 保留边界条件、异常分支、兼容性处理与隐含前置条件
@@ -22,36 +23,39 @@
 
 ### 核心架构文档（必读）
 
-| 文档 | 描述 | 优先级 |
-|------|------|--------|
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | 系统架构、启动序列、模块依赖图、核心组件关系 | ⭐⭐⭐ |
-| [PLUGIN_ECOSYSTEM.md](./PLUGIN_ECOSYSTEM.md) | 插件类型、manifest schema、执行模式、配置机制 | ⭐⭐⭐ |
+| 文档                                                                                     | 描述                                                                                             | 优先级 |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------ |
+| [ARCHITECTURE.md](./ARCHITECTURE.md)                                                     | 系统架构、启动序列、模块依赖图、核心组件关系                                                     | ⭐⭐⭐ |
+| [PLUGIN_ECOSYSTEM.md](./PLUGIN_ECOSYSTEM.md)                                             | 插件类型、manifest schema、执行模式、配置机制                                                    | ⭐⭐⭐ |
 | [VCP_TOOL_RESULT_PIPELINE_REFACTOR_SPEC.md](./VCP_TOOL_RESULT_PIPELINE_REFACTOR_SPEC.md) | 工具返回管线理想最终版开发书：统一结果协议、资源/错误/异步模型、多消费者投影与全插件迁移验收规范 | ⭐⭐⭐ |
-| [CONFIGURATION.md](./CONFIGURATION.md) | 所有配置参数、优先级规则、影响范围、风险警告 | ⭐⭐⭐ |
-| [API_ROUTES.md](./API_ROUTES.md) | HTTP端点、认证要求、参数规范、处理逻辑 | ⭐⭐⭐ |
+| [CONFIGURATION.md](./CONFIGURATION.md)                                                   | 所有配置参数、优先级规则、影响范围、风险警告                                                     | ⭐⭐⭐ |
+| [API_ROUTES.md](./API_ROUTES.md)                                                         | HTTP 端点、认证要求、参数规范、处理逻辑                                                          | ⭐⭐⭐ |
 
 ### 专项技术文档
 
-| 文档 | 描述 | 优先级 |
-|------|------|--------|
-| [MEMORY_SYSTEM.md](./MEMORY_SYSTEM.md) | TagMemo算法、EPA模块、残差金字塔、向量索引 | ⭐⭐⭐ |
-| [VCP记忆管理系统.md](./VCP记忆管理系统.md) | 记忆系统上手、日记本管理、记忆注入与操作指南 | ⭐⭐⭐ |
+| 文档                                                                         | 描述                                                | 优先级 |
+| ---------------------------------------------------------------------------- | --------------------------------------------------- | ------ |
+| [MEMORY_SYSTEM.md](./MEMORY_SYSTEM.md)                                       | TagMemo 算法、EPA 模块、残差金字塔、向量索引        | ⭐⭐⭐ |
+| [VCP 记忆管理系统.md](./VCP记忆管理系统.md)                                  | 记忆系统上手、日记本管理、记忆注入与操作指南        | ⭐⭐⭐ |
 | [TagMemo_Wave_Algorithm_Deep_Dive.md](./TagMemo_Wave_Algorithm_Deep_Dive.md) | TagMemo V9 全上下文降噪、传播底座与浪潮算法数学原理 | ⭐⭐⭐ |
-| [RIVERMEMO_TOPOLOGY_V3.md](./RIVERMEMO_TOPOLOGY_V3.md) | RiverMemo 拓扑 V3、双尺度场、相对拓扑与 Ω 统一泛函 | ⭐⭐⭐ |
-| [CONTEXT_BRIDGE.md](./CONTEXT_BRIDGE.md) | 上下文向量引力场公开接口、插件间向量共享机制 | ⭐⭐⭐ |
-| [DISTRIBUTED_ARCHITECTURE.md](./DISTRIBUTED_ARCHITECTURE.md) | WebSocket协议、节点注册、工具执行、文件传输 | ⭐⭐ |
-| [RUST_VECTOR_ENGINE.md](./RUST_VECTOR_ENGINE.md) | N-API接口、向量操作、性能特性 | ⭐⭐ |
-| [FRONTEND_COMPONENTS.md](./FRONTEND_COMPONENTS.md) | AdminPanel、VCPChrome、OpenWebUISub架构与集成 | ⭐⭐ |
+| [RIVERMEMO_TOPOLOGY_V3.md](./RIVERMEMO_TOPOLOGY_V3.md)                       | RiverMemo 拓扑 V3、双尺度场、相对拓扑与 Ω 统一泛函  | ⭐⭐⭐ |
+| [CONTEXT_BRIDGE.md](./CONTEXT_BRIDGE.md)                                     | 上下文向量引力场公开接口、插件间向量共享机制        | ⭐⭐⭐ |
+| [DISTRIBUTED_ARCHITECTURE.md](./DISTRIBUTED_ARCHITECTURE.md)                 | WebSocket 协议、节点注册、工具执行、文件传输        | ⭐⭐   |
+| [RUST_VECTOR_ENGINE.md](./RUST_VECTOR_ENGINE.md)                             | N-API 接口、向量操作、性能特性                      | ⭐⭐   |
+| [FRONTEND_COMPONENTS.md](./FRONTEND_COMPONENTS.md)                           | AdminPanel、VCPChrome、OpenWebUISub 架构与集成      | ⭐⭐   |
 
 ### 参考文档
 
-| 文档 | 描述 | 优先级 |
-|------|------|--------|
-| [TECHNICAL_LITE.md](./TECHNICAL_LITE.md) | README 与完整文档之间的轻量技术地图，汇总核心系统与阅读路径 | ⭐⭐ |
-| [CPU_TEMPERATURE_MONITOR.md](./CPU_TEMPERATURE_MONITOR.md) | Windows 家庭服务器通过 LibreHardwareMonitor 获取 CPU 温度并在面板显示 | ⭐ |
-| [FILE_INVENTORY.md](./FILE_INVENTORY.md) | 所有重要文件的职责、入口、依赖关系 | ⭐ |
-| [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) | 每项功能的入口、触发条件、处理流程、配置项 | ⭐ |
-| [OPERATIONS.md](./OPERATIONS.md) | 启动方式、依赖要求、Docker配置、故障排查 | ⭐ |
+| 文档                                                                           | 描述                                                                                     | 优先级 |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ------ |
+| [TECHNICAL_LITE.md](./TECHNICAL_LITE.md)                                       | README 与完整文档之间的轻量技术地图，汇总核心系统与阅读路径                              | ⭐⭐   |
+| [CPU_TEMPERATURE_MONITOR.md](./CPU_TEMPERATURE_MONITOR.md)                     | Windows 家庭服务器通过 LibreHardwareMonitor 获取 CPU 温度并在面板显示                    | ⭐     |
+| [FILE_INVENTORY.md](./FILE_INVENTORY.md)                                       | 所有重要文件的职责、入口、依赖关系                                                       | ⭐     |
+| [FEATURE_MATRIX.md](./FEATURE_MATRIX.md)                                       | 每项功能的入口、触发条件、处理流程、配置项                                               | ⭐     |
+| [OPERATIONS.md](./OPERATIONS.md)                                               | 启动方式、依赖要求、Docker 配置、故障排查                                                | ⭐     |
+| [PRODUCTION_UPGRADE_SOP.md](./PRODUCTION_UPGRADE_SOP.md)                       | **生产/客户/CLI Agent 升级唯一真源**（ff-only、仓库外备份、分层探针、禁止自动 Git 回滚） | ⭐⭐⭐ |
+| [UPSTREAM_STASH_PULL_POP_CHECKLIST.md](./UPSTREAM_STASH_PULL_POP_CHECKLIST.md) | 本机上游同步 runbook、AA 配置变更、问题台账                                              | ⭐⭐   |
+| [VCPToolbox 更新与配置管理流程.txt](./VCPToolbox更新与配置管理流程.txt)        | **仅**开发者 PR rebase 流，禁止当生产手册                                                | ⭐     |
 
 ---
 
@@ -59,38 +63,40 @@
 
 ### 按任务类型查找
 
-| 任务 | 推荐文档 |
-|------|----------|
-| 理解系统启动流程 | [ARCHITECTURE.md](./ARCHITECTURE.md) § 启动序列 |
-| 开发新插件 | [PLUGIN_ECOSYSTEM.md](./PLUGIN_ECOSYSTEM.md) § Manifest Schema |
-| 重构工具返回协议或迁移插件输出 | [VCP_TOOL_RESULT_PIPELINE_REFACTOR_SPEC.md](./VCP_TOOL_RESULT_PIPELINE_REFACTOR_SPEC.md) |
-| 插件间共享向量能力 | [CONTEXT_BRIDGE.md](./CONTEXT_BRIDGE.md) § 快速接入指南 |
-| 修改配置参数 | [CONFIGURATION.md](./CONFIGURATION.md) § 配置语义总表 |
-| 添加新API端点 | [API_ROUTES.md](./API_ROUTES.md) § 路由挂载流程 |
-| 优化RAG检索 | [MEMORY_SYSTEM.md](./MEMORY_SYSTEM.md) § TagMemo算法 |
-| 上手机忆/日记系统 | [VCP记忆管理系统.md](./VCP记忆管理系统.md) |
-| 理解V9全上下文降噪与传播底座 | [TagMemo_Wave_Algorithm_Deep_Dive.md](./TagMemo_Wave_Algorithm_Deep_Dive.md) |
-| 深入RiverMemo拓扑V3与Ω泛函 | [RIVERMEMO_TOPOLOGY_V3.md](./RIVERMEMO_TOPOLOGY_V3.md) |
-| 部署分布式节点 | [DISTRIBUTED_ARCHITECTURE.md](./DISTRIBUTED_ARCHITECTURE.md) § 节点注册 |
-| 调试向量索引 | [RUST_VECTOR_ENGINE.md](./RUST_VECTOR_ENGINE.md) § 错误处理 |
-| 定制管理面板 | [FRONTEND_COMPONENTS.md](./FRONTEND_COMPONENTS.md) § AdminPanel |
-| 配置 CPU 温度显示 | [CPU_TEMPERATURE_MONITOR.md](./CPU_TEMPERATURE_MONITOR.md) |
-| 定位特定文件 | [FILE_INVENTORY.md](./FILE_INVENTORY.md) |
-| 查找功能实现 | [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) |
-| 排查运行故障 | [OPERATIONS.md](./OPERATIONS.md) § 故障排查 |
+| 任务                             | 推荐文档                                                                                 |
+| -------------------------------- | ---------------------------------------------------------------------------------------- |
+| 理解系统启动流程                 | [ARCHITECTURE.md](./ARCHITECTURE.md) § 启动序列                                          |
+| 开发新插件                       | [PLUGIN_ECOSYSTEM.md](./PLUGIN_ECOSYSTEM.md) § Manifest Schema                           |
+| 重构工具返回协议或迁移插件输出   | [VCP_TOOL_RESULT_PIPELINE_REFACTOR_SPEC.md](./VCP_TOOL_RESULT_PIPELINE_REFACTOR_SPEC.md) |
+| 插件间共享向量能力               | [CONTEXT_BRIDGE.md](./CONTEXT_BRIDGE.md) § 快速接入指南                                  |
+| 修改配置参数                     | [CONFIGURATION.md](./CONFIGURATION.md) § 配置语义总表                                    |
+| 添加新 API 端点                  | [API_ROUTES.md](./API_ROUTES.md) § 路由挂载流程                                          |
+| 优化 RAG 检索                    | [MEMORY_SYSTEM.md](./MEMORY_SYSTEM.md) § TagMemo 算法                                    |
+| 上手机忆/日记系统                | [VCP 记忆管理系统.md](./VCP记忆管理系统.md)                                              |
+| 理解 V9 全上下文降噪与传播底座   | [TagMemo_Wave_Algorithm_Deep_Dive.md](./TagMemo_Wave_Algorithm_Deep_Dive.md)             |
+| 深入 RiverMemo 拓扑 V3 与 Ω 泛函 | [RIVERMEMO_TOPOLOGY_V3.md](./RIVERMEMO_TOPOLOGY_V3.md)                                   |
+| 部署分布式节点                   | [DISTRIBUTED_ARCHITECTURE.md](./DISTRIBUTED_ARCHITECTURE.md) § 节点注册                  |
+| 调试向量索引                     | [RUST_VECTOR_ENGINE.md](./RUST_VECTOR_ENGINE.md) § 错误处理                              |
+| 定制管理面板                     | [FRONTEND_COMPONENTS.md](./FRONTEND_COMPONENTS.md) § AdminPanel                          |
+| 配置 CPU 温度显示                | [CPU_TEMPERATURE_MONITOR.md](./CPU_TEMPERATURE_MONITOR.md)                               |
+| 定位特定文件                     | [FILE_INVENTORY.md](./FILE_INVENTORY.md)                                                 |
+| 查找功能实现                     | [FEATURE_MATRIX.md](./FEATURE_MATRIX.md)                                                 |
+| 排查运行故障                     | [OPERATIONS.md](./OPERATIONS.md) § 故障排查                                              |
+| 生产/客户/CLI Agent 升级         | [PRODUCTION_UPGRADE_SOP.md](./PRODUCTION_UPGRADE_SOP.md)（禁止裸 git pull）              |
+| 开发者向上游提 PR                | [VCPToolbox 更新与配置管理流程.txt](./VCPToolbox更新与配置管理流程.txt)                  |
 
 ### 按模块查找
 
-| 模块 | 核心文件 | 文档章节 |
-|------|----------|----------|
-| 服务器启动 | `server.js` | [ARCHITECTURE.md](./ARCHITECTURE.md) § 启动序列 |
-| 插件管理 | `Plugin.js` | [PLUGIN_ECOSYSTEM.md](./PLUGIN_ECOSYSTEM.md) § 生命周期 |
-| 工具返回运行时（规划最终态） | `modules/tool-runtime/` | [VCP_TOOL_RESULT_PIPELINE_REFACTOR_SPEC.md](./VCP_TOOL_RESULT_PIPELINE_REFACTOR_SPEC.md) |
-| WebSocket | `WebSocketServer.js` | [DISTRIBUTED_ARCHITECTURE.md](./DISTRIBUTED_ARCHITECTURE.md) § 协议 |
-| 知识库 | `KnowledgeBaseManager.js` | [MEMORY_SYSTEM.md](./MEMORY_SYSTEM.md) § 架构 |
-| 向量引擎 | `rust-vexus-lite/` | [RUST_VECTOR_ENGINE.md](./RUST_VECTOR_ENGINE.md) |
-| 路由层 | `routes/` | [API_ROUTES.md](./API_ROUTES.md) |
-| 管理面板 | `AdminPanel/` | [FRONTEND_COMPONENTS.md](./FRONTEND_COMPONENTS.md) |
+| 模块                         | 核心文件                  | 文档章节                                                                                 |
+| ---------------------------- | ------------------------- | ---------------------------------------------------------------------------------------- |
+| 服务器启动                   | `server.js`               | [ARCHITECTURE.md](./ARCHITECTURE.md) § 启动序列                                          |
+| 插件管理                     | `Plugin.js`               | [PLUGIN_ECOSYSTEM.md](./PLUGIN_ECOSYSTEM.md) § 生命周期                                  |
+| 工具返回运行时（规划最终态） | `modules/tool-runtime/`   | [VCP_TOOL_RESULT_PIPELINE_REFACTOR_SPEC.md](./VCP_TOOL_RESULT_PIPELINE_REFACTOR_SPEC.md) |
+| WebSocket                    | `WebSocketServer.js`      | [DISTRIBUTED_ARCHITECTURE.md](./DISTRIBUTED_ARCHITECTURE.md) § 协议                      |
+| 知识库                       | `KnowledgeBaseManager.js` | [MEMORY_SYSTEM.md](./MEMORY_SYSTEM.md) § 架构                                            |
+| 向量引擎                     | `rust-vexus-lite/`        | [RUST_VECTOR_ENGINE.md](./RUST_VECTOR_ENGINE.md)                                         |
+| 路由层                       | `routes/`                 | [API_ROUTES.md](./API_ROUTES.md)                                                         |
+| 管理面板                     | `AdminPanel/`             | [FRONTEND_COMPONENTS.md](./FRONTEND_COMPONENTS.md)                                       |
 
 ---
 
@@ -99,16 +105,19 @@
 ### 阅读顺序建议
 
 **首次接触 VCPToolBox：**
+
 1. 阅读 [ARCHITECTURE.md](./ARCHITECTURE.md) 了解整体架构
 2. 阅读 [PLUGIN_ECOSYSTEM.md](./PLUGIN_ECOSYSTEM.md) 理解插件机制
 3. 根据具体任务查阅专项文档
 
 **开发新功能：**
+
 1. 在 [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) 查找类似功能
 2. 在 [FILE_INVENTORY.md](./FILE_INVENTORY.md) 定位相关文件
 3. 在对应专项文档中查阅实现细节
 
 **排查问题：**
+
 1. 在 [OPERATIONS.md](./OPERATIONS.md) 查找常见故障
 2. 在 [CONFIGURATION.md](./CONFIGURATION.md) 检查配置项
 3. 在 [ARCHITECTURE.md](./ARCHITECTURE.md) 追踪调用链
@@ -124,6 +133,7 @@
 ```
 
 **示例：**
+
 ```
 📁 server.js:76-84
 📍 initialize() 函数
@@ -132,13 +142,13 @@
 
 ### 术语约定
 
-| 术语 | 含义 |
-|------|------|
-| **已确认** | 直接从代码中读取的事实 |
-| **推断** | 基于代码逻辑的合理推断 |
-| **不确定** | 需要运行时验证或进一步确认 |
-| **风险点** | 可能导致问题的配置或实现 |
-| **边界条件** | 特殊情况下的行为 |
+| 术语         | 含义                       |
+| ------------ | -------------------------- |
+| **已确认**   | 直接从代码中读取的事实     |
+| **推断**     | 基于代码逻辑的合理推断     |
+| **不确定**   | 需要运行时验证或进一步确认 |
+| **风险点**   | 可能导致问题的配置或实现   |
+| **边界条件** | 特殊情况下的行为           |
 
 ---
 
@@ -151,7 +161,7 @@
 1. **架构变更**：模块依赖关系、启动流程、核心组件变化
 2. **插件协议变更**：manifest schema、执行模式、通信协议
 3. **配置项变更**：新增/删除/修改配置参数
-4. **API变更**：新增/删除/修改HTTP端点
+4. **API 变更**：新增/删除/修改 HTTP 端点
 5. **算法优化**：TagMemo、EPA、残差金字塔等核心算法
 
 ### 文档版本管理
@@ -178,18 +188,20 @@
 ### 文档覆盖范围
 
 **已覆盖：**
+
 - ✅ 核心架构与启动流程
 - ✅ 插件生态与执行机制
 - ✅ 配置系统与参数语义
-- ✅ API路由与认证机制
-- ✅ 记忆系统与RAG算法
-- ✅ 分布式架构与WebSocket协议
-- ✅ Rust向量引擎与N-API接口
+- ✅ API 路由与认证机制
+- ✅ 记忆系统与 RAG 算法
+- ✅ 分布式架构与 WebSocket 协议
+- ✅ Rust 向量引擎与 N-API 接口
 - ✅ 前端组件与集成方式
 
 **未覆盖：**
+
 - ❌ 每个插件的详细实现（70+插件，仅覆盖代表性样例）
-- ❌ 前端UI组件的详细交互逻辑
+- ❌ 前端 UI 组件的详细交互逻辑
 - ❌ 性能调优的具体参数建议
 - ❌ 安全加固的完整检查清单
 
@@ -215,24 +227,24 @@
 
 ### 相关资源
 
-- **项目README**：[README.md](../README.md)
-- **VCP理论文档**：[VCP.md](../VCP.md)
-- **VCP技术Lite索引**：[TECHNICAL_LITE.md](./TECHNICAL_LITE.md)
-- **VCP记忆管理系统指南**：[VCP记忆管理系统.md](./VCP记忆管理系统.md)
-- **TagMemo V9降噪与传播底座**：[TagMemo_Wave_Algorithm_Deep_Dive.md](./TagMemo_Wave_Algorithm_Deep_Dive.md)
-- **RiverMemo拓扑V3与Ω泛函**：[RIVERMEMO_TOPOLOGY_V3.md](./RIVERMEMO_TOPOLOGY_V3.md)
-- **CPU温度监控配置指南**：[CPU_TEMPERATURE_MONITOR.md](./CPU_TEMPERATURE_MONITOR.md)
+- **项目 README**：[README.md](../README.md)
+- **VCP 理论文档**：[VCP.md](../VCP.md)
+- **VCP 技术 Lite 索引**：[TECHNICAL_LITE.md](./TECHNICAL_LITE.md)
+- **VCP 记忆管理系统指南**：[VCP 记忆管理系统.md](./VCP记忆管理系统.md)
+- **TagMemo V9 降噪与传播底座**：[TagMemo_Wave_Algorithm_Deep_Dive.md](./TagMemo_Wave_Algorithm_Deep_Dive.md)
+- **RiverMemo 拓扑 V3 与 Ω 泛函**：[RIVERMEMO_TOPOLOGY_V3.md](./RIVERMEMO_TOPOLOGY_V3.md)
+- **CPU 温度监控配置指南**：[CPU_TEMPERATURE_MONITOR.md](./CPU_TEMPERATURE_MONITOR.md)
 - **变更日志**：[ChangeLog.md](../ChangeLog.md)
 
 ### 外部参考
 
-- **Node.js官方文档**：https://nodejs.org/docs/
-- **Express.js文档**：https://expressjs.com/
-- **N-API文档**：https://nodejs.org/api/n-api.html
-- **Chrome扩展开发**：https://developer.chrome.com/docs/extensions/
+- **Node.js 官方文档**：https://nodejs.org/docs/
+- **Express.js 文档**：https://expressjs.com/
+- **N-API 文档**：https://nodejs.org/api/n-api.html
+- **Chrome 扩展开发**：https://developer.chrome.com/docs/extensions/
 
 ---
 
 **文档生成工具：** OpenCode AI Agent  
 **最后更新：** 2026-02-13  
-**维护者：** VCPToolBox开发团队
+**维护者：** VCPToolBox 开发团队

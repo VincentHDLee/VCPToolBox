@@ -1,10 +1,14 @@
 # VCPToolBox Upstream 更新清单（Stash → Pull → Pop → Config → PM2 → Push）
 
+> **不是生产升级真源。** 客户 / 运维 / CLI Agent 升级只执行 [`PRODUCTION_UPGRADE_SOP.md`](./PRODUCTION_UPGRADE_SOP.md)。  
+> 开发者向上游提 PR：[`VCPToolbox更新与配置管理流程.txt`](./VCPToolbox更新与配置管理流程.txt)。  
+> 本文是本机历史 runbook（stash/镜像/AA 专章、问题台账），不替代生产 SOP。
+>
 > 适用仓库：`D:\SoftwareDevelopCase\VCPToolBox`  
 > Fork `origin`：`https://github.com/VincentHDLee/VCPToolBox.git`  
 > Upstream：`https://github.com/lioensky/VCPToolBox.git`  
 > 分支：`main`  
-> 本文档目标：可重复执行的「有本地改动时从上游同步」完整流程，并在启动成功后推送到 fork。
+> 本文档目标：可重复执行的「有本地改动时从上游同步」完整流程，并在启动成功后（可选）推送到 fork。
 
 ---
 
@@ -450,15 +454,15 @@ git push origin main
 
 ### 9.1 默认 **不要** commit / push 的路径
 
-| 路径                                               | 原因                                                                          |
-| -------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `config.env`、`**/config.env`、各类 `.bak_*`       | 密钥 / 本机环境（gitignore）                                                  |
-| `Plugin/AgentAssistant/config.json`                | **私有角色表**；注意：当前 **未必** 被 `.gitignore` 忽略，必须 **刻意不 add** |
-| `Plugin/AgentAssistant/config.env` 及 `*.bak_aa_*` | 镜像/备份；env 已 ignore，bak 也可能 untracked                                |
-| `Plugin/UserAuth/code.bin`                         | 本机认证产物                                                                  |
-| `Plugin/VCPBridgeServer/bridge-config.json`        | 本地桥接                                                                      |
-| `sarprompt.json` 等私货                            | 非上游共享                                                                    |
-| `Plugin/1PanelInfoProvider/`                       | 本地插件目录，推送前需用户确认                                                |
+| 路径                                               | 原因                                                            |
+| -------------------------------------------------- | --------------------------------------------------------------- |
+| `config.env`、`**/config.env`、各类 `.bak_*`       | 密钥 / 本机环境（gitignore）                                    |
+| `Plugin/AgentAssistant/config.json`                | **私有角色表**；已 gitignore（2026-09-05），仍禁止 `git add -f` |
+| `Plugin/AgentAssistant/config.env` 及 `*.bak_aa_*` | 镜像/备份；env 已 ignore，bak 也可能 untracked                  |
+| `Plugin/UserAuth/code.bin`                         | 本机认证产物                                                    |
+| `Plugin/VCPBridgeServer/bridge-config.json`        | 本地桥接                                                        |
+| `sarprompt.json` 等私货                            | 非上游共享                                                      |
+| `Plugin/1PanelInfoProvider/`                       | 本地插件目录，推送前需用户确认                                  |
 
 ### 9.2 默认可推 / 需确认
 
@@ -643,7 +647,7 @@ VCPChat 不在本清单默认范围内，除非用户明确要求同步前端。
 | R4  | 模型策略                             | 旧 Pro / `gemini-3.1-pro` 不可用                                       | **全员** `gemini-3.7-flash`；ATHENA/JIYUXIN/MORPHEUS 留 `modelNote` 待新 Pro                    | 本地 json（勿推） |
 | R5  | 根 `VarCity` 乱码 → 天气城市 **400** | UTF-8 被错误写入/BOM 导致 mojibake                                     | UTF-8 **无 BOM** 写回 `VarCity=防城港`；`pm2 restart vcp-main`；城市 400 消失                   | §0、§8.3          |
 | R6  | PM2 日志误判                         | error 日志混入数月前 EADDRINUSE 等                                     | 门禁前 **`pm2 flush` → delete all → start**，只审本轮                                           | §8.4、§11.5       |
-| R7  | 推 fork 带私钥风险                   | AA `config.json` **未**在 gitignore                                    | §9.1 明确禁止 add；本次仅 push docs                                                             | §9.1              |
+| R7  | 推 fork 带私钥风险                   | AA `config.json` 曾未 gitignore                                        | §9.1 禁止 add；**2026-09-05** 已写入根/插件 `.gitignore`                                        | §9.1              |
 | R8  | PSE 缺新键                           | 上游 v1.1.0 example 新增                                               | 本地 `config.env` 追加 `POWERSHELL_RETURN_MODE` / `VERBOSE_ERROR`（不提交）                     | §11               |
 | R9  | GitHub 直连失败                      | 代理端口关闭 / 443 不稳                                                | `ghfast.top` upstream-mirror fetch + ff-only                                                    | §3、§11           |
 | R10 | 编码 BOM                             | PS `Set-Content -Encoding utf8`                                        | 禁止；用 Node Buffer 或 `UTF8Encoding $false`                                                   | §0                |
@@ -653,23 +657,23 @@ VCPChat 不在本清单默认范围内，除非用户明确要求同步前端。
 
 ### 14.2 待商议（Open / Decide）
 
-| ID  | 事项                                  | 现状                                             | 选项 / 建议                                                                                            | 优先级     |
-| --- | ------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ---------- |
-| O1  | **`ecosystem.config.js` 是否推 fork** | 本地无 `max_memory_restart`，与上游可能 diff     | A) 保持仅本地 B) commit 共享策略                                                                       | 中         |
-| O2  | **AA `config.json` 是否 gitignore**   | 未忽略，易误 add                                 | 建议在 `.gitignore` 增加 `Plugin/AgentAssistant/config.json`（及 bak）；需确认是否有人要共享公开角色表 | 高         |
-| O3  | **LinuxShellExecutor / `ssh2`**       | 缺模块，长待机/SSH 监控受限                      | `npm i ssh2` 或保持降级 / `.block`                                                                     | 低         |
-| O4  | **LightMemo `semantic_groups.json`**  | ENOENT，无查询扩展                               | 按 RAG 文档补文件或忽略                                                                                | 低         |
-| O5  | **天气空气质量 ETIMEDOUT**            | 打到 `198.18.1.1:443`（常见于代理/虚拟网卡路由） | 查系统代理/TUN；城市与预警已 OK 可暂缓                                                                 | 中         |
-| O6  | **VCPClawMail 等可选 SDK**            | 历史/按需缺邮件 SDK                              | 不用则 block；要用再装                                                                                 | 低         |
-| O7  | **PaperReader 仍 `.block`**           | 上游大更新但未启用                               | 需要 PDF 工作流时再启并测 CLI                                                                          | 低         |
-| O8  | **`Plugin/1PanelInfoProvider/`**      | untracked 本地插件                               | 推 fork？保留本地？删除？                                                                              | 中         |
-| O9  | **主机 RAM ~90%+**                    | 双进程+向量后偏高                                | 关不用插件 / 加内存 / 观察；**不要**用 max_memory_restart 硬杀                                         | 中         |
-| O10 | **代理 7897/7890**                    | 常关导致 git/部分 API 不稳                       | 固定「开发时开代理」或继续 ghfast                                                                      | 中         |
-| O11 | **FFmpeg PATH / AICodeWorker 路径**   | Windows 勿盲填 Linux 路径                        | 用到再配                                                                                               | 低         |
-| O12 | **旧 stash**                          | 如 `pre-upstream-sync-20260816`                  | `stash list` 审后 drop 或保留                                                                          | 低         |
-| O13 | **模型切回 Pro**                      | 三 agent 已 modelNote                            | 等官方可用新 Pro 后再改 `modelId`                                                                      | 低         |
-| O14 | **VCPChat**                           | 已另仓同步过；默认不推                           | 用户点名再动                                                                                           | —          |
-| O15 | **同步摘要质量**                      | 曾漏 AA 格式                                     | 每次摘要必须：新插件 + **破坏性配置** + 已启用插件 config diff                                         | 高（流程） |
+| ID  | 事项                                  | 现状                                                                                      | 选项 / 建议                                                    | 优先级     |
+| --- | ------------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ---------- |
+| O1  | **`ecosystem.config.js` 是否推 fork** | 本地无 `max_memory_restart`，与上游可能 diff                                              | A) 保持仅本地 B) commit 共享策略                               | 中         |
+| O2  | **AA `config.json` 是否 gitignore**   | **已处理（2026-09-05）**：根 `.gitignore` + 插件 `.gitignore` 已忽略 `config.json` 与 bak | 若需共享公开角色表须显式 `git add -f`                          | 已关闭     |
+| O3  | **LinuxShellExecutor / `ssh2`**       | 缺模块，长待机/SSH 监控受限                                                               | `npm i ssh2` 或保持降级 / `.block`                             | 低         |
+| O4  | **LightMemo `semantic_groups.json`**  | ENOENT，无查询扩展                                                                        | 按 RAG 文档补文件或忽略                                        | 低         |
+| O5  | **天气空气质量 ETIMEDOUT**            | 打到 `198.18.1.1:443`（常见于代理/虚拟网卡路由）                                          | 查系统代理/TUN；城市与预警已 OK 可暂缓                         | 中         |
+| O6  | **VCPClawMail 等可选 SDK**            | 历史/按需缺邮件 SDK                                                                       | 不用则 block；要用再装                                         | 低         |
+| O7  | **PaperReader 仍 `.block`**           | 上游大更新但未启用                                                                        | 需要 PDF 工作流时再启并测 CLI                                  | 低         |
+| O8  | **`Plugin/1PanelInfoProvider/`**      | untracked 本地插件                                                                        | 推 fork？保留本地？删除？                                      | 中         |
+| O9  | **主机 RAM ~90%+**                    | 双进程+向量后偏高                                                                         | 关不用插件 / 加内存 / 观察；**不要**用 max_memory_restart 硬杀 | 中         |
+| O10 | **代理 7897/7890**                    | 常关导致 git/部分 API 不稳                                                                | 固定「开发时开代理」或继续 ghfast                              | 中         |
+| O11 | **FFmpeg PATH / AICodeWorker 路径**   | Windows 勿盲填 Linux 路径                                                                 | 用到再配                                                       | 低         |
+| O12 | **旧 stash**                          | 如 `pre-upstream-sync-20260816`                                                           | `stash list` 审后 drop 或保留                                  | 低         |
+| O13 | **模型切回 Pro**                      | 三 agent 已 modelNote                                                                     | 等官方可用新 Pro 后再改 `modelId`                              | 低         |
+| O14 | **VCPChat**                           | 已另仓同步过；默认不推                                                                    | 用户点名再动                                                   | —          |
+| O15 | **同步摘要质量**                      | 曾漏 AA 格式                                                                              | 每次摘要必须：新插件 + **破坏性配置** + 已启用插件 config diff | 高（流程） |
 
 ### 14.3 建议下次同步时多做的 30 秒检查
 

@@ -1,0 +1,220 @@
+### VCPToolbox 更新与配置管理流程（开发者 PR 专用）
+
+> **警告（先读）：**  
+> **生产环境 / 客户部署 / CLI Agent 升级不要使用本文。**  
+> 生产升级唯一真源：[`docs/PRODUCTION_UPGRADE_SOP.md`](./PRODUCTION_UPGRADE_SOP.md)  
+> 本机详细 runbook：[`docs/UPSTREAM_STASH_PULL_POP_CHECKLIST.md`](./UPSTREAM_STASH_PULL_POP_CHECKLIST.md)  
+> 本文 **仅** 适用于：已有 fork、准备把补丁 **rebase 到 upstream/main 再提 PR** 的开发者。  
+> 仓库根目录 `update.bat` 已改为安全拦截，**不会**执行裸 `git pull`。
+
+*   [跳转至中文版 (适用于中文母语者)](#chinese-version-update-workflow)
+*   [Go to English Version (For English native speakers and LLMs)](#english-version-update-workflow)
+
+---
+<a name="chinese-version-update-workflow"></a>
+### **中文版**
+---
+
+**文档目的：**
+本文档是 **向上游贡献代码（PR）** 的开发流 SOP。目标是在干净、线性的提交历史上把本地提交变基到 `upstream/main` 顶端，再推送到个人 fork 并开 PR。
+
+**不是** 客户升级手册。生产升级必须使用 `docs/PRODUCTION_UPGRADE_SOP.md`（物理备份、停机、`merge --ff-only`、配置补缺、PM2 双进程探针；失败只停机报警，禁止自动 Git 强回滚）。
+
+---
+### **第一部分：Git 仓库设置 (前置要求)**
+
+为了方便开发和更新，建议按以下方式配置您的 Git 远程仓库。HTTPS 或 SSH 均可。
+
+**远程仓库配置示例:**
+```bash
+# origin 指向您自己的 fork 仓库
+origin    git@github.com:VincentHDLee/VCPToolBox.git (fetch)
+origin    git@github.com:VincentHDLee/VCPToolBox.git (push)
+
+# upstream 指向官方的源头仓库
+upstream  git@github.com:lioensky/VCPToolBox.git (fetch)
+upstream  git@github.com:lioensky/VCPToolBox.git (push)
+```
+
+**仓库角色说明:**
+*   **`upstream`**: 项目的官方源头仓库 (`lioensky/VCPToolBox`)。变基与对比始终以这里的 `main` 为准。
+*   **`origin`**: 您在 GitHub 上 fork 的个人仓库。功能分支与 PR 推送到这里。
+
+**分支建议：** 不要在已推送的生产 `main` 上 rebase。为 PR 使用独立分支（例如 `feat/xxx`），只 rebase **尚未推送** 或明确约定 force-push 的功能分支。
+
+---
+### **第二部分：开发者 PR 变基流程**
+
+在功能分支上、准备与上游对齐时，按以下步骤操作。工作目录以您的实际 clone 为准（不要写死 `/opt/VCPToolBox`）。
+
+#### **步骤 0：物理备份被 ignore 的配置（stash 做不到）**
+`config.env`、`**/config.env`、`Plugin/AgentAssistant/config.json` 已被 `.gitignore` 忽略。
+
+*   `git stash -u`（`--include-untracked`）**不会**收集已被 ignore 的文件。
+*   `git stash -a`（`--all`）会连 `node_modules`、向量库一起塞进 stash，**禁止**用于本流程。
+*   `git stash show -p` 默认看不到 untracked；预览用 `git stash show -u --stat`。
+
+因此：rebase 前必须把关键配置 **拷到仓库外**：
+
+```bash
+# 示例：按日期拷贝，路径换成你的备份盘
+cp config.env /path/to/backup/config.env.bak_$(date +%Y%m%d_%H%M%S)
+# Windows PowerShell:
+# Copy-Item config.env "D:\SoftwareDevelopCase\vcp_local_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')\config.env"
+```
+
+AgentAssistant 运行时真源是 `Plugin/AgentAssistant/config.json`（不是 `config.env`）。该文件同样 gitignore，备份方式相同。
+
+#### **步骤 1：获取远程更新**
+此步骤仅下载数据，尚未修改工作文件。
+```bash
+git fetch upstream
+```
+
+#### **步骤 2：检查本地状态并暂存「已跟踪」修改**
+在变基前，务必保证工作区对 Git 而言是干净的。
+```bash
+git status
+```
+*   **如果工作区是干净的**，可跳到步骤 3。
+*   **如果有已跟踪文件的未提交修改**：stash **跟踪文件即可**。未跟踪且未被 ignore 的文件才需要 `-u`。
+```bash
+git stash push -m "PR rebase 前的本地修改"
+# 仅当确实需要带走未跟踪、且未被 ignore 的文件时：
+# git stash push -u -m "PR rebase 前的本地修改"
+```
+**不要**指望 stash 保护 `config.env`。那一步已在步骤 0 用文件拷贝完成。
+
+#### **步骤 3：在功能分支上变基到 upstream/main**
+将本地提交移动到 `upstream/main` 顶端，形成线性历史，便于开 PR。
+```bash
+git rebase upstream/main
+# 若当前在跟踪 upstream 的拉取：git pull --rebase upstream main
+```
+*   **如果成功**：Git 会提示 rebase 完成。
+*   **如果出现冲突**：Git 会暂停。您需要：
+    1.  打开提示有冲突的 **已跟踪** 源码文件。
+    2.  手动编辑，解决 `<<<<<<<`, `=======`, `>>>>>>>` 标记。
+    3.  `git add <已解决冲突的文件>`。
+    4.  `git rebase --continue`。
+    5.  困难时 `git rebase --abort` 回到变基前。
+
+**配置文件不会在 rebase 里对 `config.env` 出冲突。**  
+`config.env` 不进 Git，rebase **不会** 在其上产生冲突标记。上游新键在 `config.env.example`（以及插件目录的 `*.example`）里。对齐方式是：**保留本地已有值，把 example 中缺失的键追加到本地文件**（UTF-8 无 BOM）。不要把「解决 git 冲突」套用到 ignore 文件上。
+
+多数插件的 `plugin-manifest.json` 是上游契约、跟仓库走。不要把它当私有配置去「保留自己的一份」。例外：`Plugin/AgentAssistant` 的 `plugin-manifest.json` 可能被插件目录 gitignore，以 `.example` 为模板；运行时角色表是 `config.json`。
+
+#### **步骤 4：恢复暂存的修改**
+```bash
+git status
+git stash pop
+# 或 git stash apply（保留 stash 记录）
+```
+stash 与上游改到同一行时仍可能冲突：按源码冲突处理。Agent/无 TTY 环境不要跑这一步的交互修复，应非零退出。
+
+#### **步骤 5：检查新配置项与变更（补缺，不覆盖）**
+*   **分析日志**：用变基前后的 SHA，例如 `git log OLD_HEAD..HEAD`，不要用模糊的 `--since="X days"` 代替。
+*   **根配置**：对比 `config.env.example` 与本地 `config.env`，**只追加缺失键**。全局项（天气 Key、Tavily、浏览器运行时等）在根 `config.env`，不是「全部写到插件目录」。
+*   **配置优先级（代码）**：插件目录 `config.env` > 根 `config.env` > manifest 默认值。
+*   **插件**：已启用插件看其 `config.env.example`；新插件可用 `plugin-manifest.json.block` 先禁用。
+*   **AgentAssistant**：只改 `config.json`；改 `config.env` 在迁移完成后 **不会生效**。
+*   **其它可能需手工对齐的文件**：`preprocessor_order.json`、`agent_map.json`、`SemanticModelRouter.json`、`multimodal-config.json`（部分被 gitignore）。
+*   **TVStxt**：新增工具时按需补充说明。
+
+#### **步骤 6：提交并推送到功能分支（不要默认推生产 main）**
+变基后的本地提交推到 fork 的 **功能分支** 再开 PR。不要把「同步上游」和「提交本地密钥/角色表」绑在一起。
+```bash
+# ======================================================================
+# !! 严重警告：在任何时候都严禁使用 `git add .` !!
+# ======================================================================
+#
+# 即使文件已被 gitignore，也禁止盲 add。黑名单包括但不限于：
+#   config.env、Plugin/*/config.env、Plugin/AgentAssistant/config.json、
+#   Plugin/UserAuth/code.bin、各类 .bak_*、本地私有插件目录。
+#
+# 请始终根据 git status 逐一添加要进 PR 的源码路径。
+# git add -u 只会暂存已跟踪文件，仍须检查是否误改了不应共享的跟踪文件。
+
+git add <您需要提交的文件路径>
+git commit -m "<描述本 PR 的实际改动，不要写 Sync with upstream and apply local fixes>"
+git push origin HEAD
+```
+若该功能分支曾被推送且 rebase 改写了历史，需要 `git push --force-with-lease`——**仅限您自己的功能分支**，禁止对 `upstream` 或共享 `main` force-push。
+
+#### **步骤 7：本地验证（可选，与生产 SOP 分离）**
+PR 开发机可用 `node server.js` 或 PM2。生产名是 `vcp-main` / `vcp-admin`（`ecosystem.config.js`），**没有** `VCPToolBox` 这个 PM2 应用名。不要加 `max_memory_restart`。完整生产拉起与探针见 `docs/PRODUCTION_UPGRADE_SOP.md`。
+
+不存在 `Docs/pm2_cheatsheet.md`。
+
+---
+<a name="english-version-update-workflow"></a>
+### **English Version**
+---
+
+**Document Purpose:**
+This is the **developer PR workflow** (rebase onto `upstream/main`, push a feature branch, open a PR). It is **not** the customer/production upgrade runbook.
+
+**Production / CLI Agent:** use [`docs/PRODUCTION_UPGRADE_SOP.md`](./PRODUCTION_UPGRADE_SOP.md) only (`fetch` + `merge --ff-only`, off-repo backups, config key fill, PM2 `vcp-main`/`vcp-admin` probes; on failure stop services and report — **never** auto `git reset --hard`).
+
+---
+### **Part 1: Git Repository Setup (Prerequisite)**
+
+```bash
+# 'origin' = your fork
+origin    git@github.com:VincentHDLee/VCPToolBox.git (fetch)
+origin    git@github.com:VincentHDLee/VCPToolBox.git (push)
+
+# 'upstream' = official source
+upstream  git@github.com:lioensky/VCPToolBox.git (fetch)
+upstream  git@github.com:lioensky/VCPToolBox.git (push)
+```
+
+Do **not** rebase a published production `main`. Use a feature branch for PRs. Only rebase unpushed commits, or a branch you explicitly own for `--force-with-lease`.
+
+---
+### **Part 2: PR Rebase Workflow**
+
+#### **Step 0: Copy ignored configs off-repo (stash cannot protect them)**
+`config.env`, `**/config.env`, and `Plugin/AgentAssistant/config.json` are gitignored.
+
+*   `git stash -u` does **not** include ignored files.
+*   `git stash -a` would also stash `node_modules` / vector stores — **do not use**.
+*   `git stash show -p` omits untracked; use `git stash show -u --stat`.
+
+Copy `config.env` (and AA `config.json` if present) to a directory **outside** the clone before rebasing.
+
+#### **Step 1: Fetch**
+```bash
+git fetch upstream
+```
+
+#### **Step 2: Stash tracked work only**
+```bash
+git status
+git stash push -m "before PR rebase"
+# add -u only for untracked, non-ignored files
+```
+Stash will **not** save `config.env`. That was Step 0.
+
+#### **Step 3: Rebase onto upstream/main**
+```bash
+git rebase upstream/main
+```
+Resolve conflicts in **tracked source files** as usual (`add` / `--continue` / `--abort`).
+
+**`config.env` will not show rebase conflict markers** — it is not in Git. New keys live in `config.env.example`. Fill missing keys into your local file; keep existing values. Do not treat `plugin-manifest.json` as a private config except AgentAssistant’s ignored manifest / `config.json` runtime table.
+
+#### **Step 4: Stash pop**
+```bash
+git stash pop
+```
+Conflicts here are source conflicts. Non-interactive agents must exit non-zero instead of waiting on TTY.
+
+#### **Step 5: Config fill (append missing keys)**
+Compare `PRE..HEAD`, not `--since="X days"`. Priority in code: plugin `config.env` > root `config.env` > manifest defaults. AgentAssistant runtime source of truth is `config.json`. Also check `preprocessor_order.json` and other gitignored runtime JSON if the PR touches those systems.
+
+#### **Step 6: Commit and push the feature branch**
+**Never `git add .`.** Never add `config.env`, AA `config.json`, `code.bin`, or `*.bak_*`. Do not use a generic “Sync with upstream and apply local fixes” message. Force-push only your own feature branch with `--force-with-lease`.
+
+#### **Step 7: Local run (optional)**
+PM2 apps are `vcp-main` and `vcp-admin`. There is no `VCPToolBox` process name and no `Docs/pm2_cheatsheet.md`. Production gates: `PRODUCTION_UPGRADE_SOP.md`.

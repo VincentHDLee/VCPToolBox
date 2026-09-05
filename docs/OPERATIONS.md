@@ -22,11 +22,11 @@
 
 ### 1.1 系统要求
 
-| 组件 | 最低要求 | 推荐配置 |
-|------|----------|----------|
-| CPU | 2 核 | 4 核+ |
-| 内存 | 4 GB | 8 GB+ |
-| 磁盘 | 20 GB | 50 GB+ (SSD) |
+| 组件     | 最低要求                | 推荐配置                 |
+| -------- | ----------------------- | ------------------------ |
+| CPU      | 2 核                    | 4 核+                    |
+| 内存     | 4 GB                    | 8 GB+                    |
+| 磁盘     | 20 GB                   | 50 GB+ (SSD)             |
 | 操作系统 | Linux / Windows / macOS | Ubuntu 22.04 / Debian 12 |
 
 ### 1.2 软件依赖
@@ -102,9 +102,9 @@ cargo --version
 
 ### 1.3 网络要求
 
-| 端口 | 用途 | 说明 |
-|------|------|------|
-| 6005 | HTTP API | 主服务端口 (可配置) |
+| 端口 | 用途      | 说明                    |
+| ---- | --------- | ----------------------- |
+| 6005 | HTTP API  | 主服务端口 (可配置)     |
 | 8088 | WebSocket | 分布式节点通信 (可配置) |
 
 ---
@@ -130,6 +130,7 @@ npm install --registry=https://registry.npmmirror.com
 ```
 
 **核心依赖列表：**
+
 - express (^5.1.0) - Web 框架
 - ws (^8.17.0) - WebSocket 服务
 - better-sqlite3 (^12.4.1) - SQLite 数据库
@@ -147,6 +148,7 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
 **核心 Python 依赖：**
+
 - sympy, scipy, numpy - 科学计算器
 - requests, Pillow - 图像处理
 - mcpo - MCP 协议兼容
@@ -242,18 +244,20 @@ pm2 save
 
 ```javascript
 module.exports = {
-  apps: [{
-    name: 'vcptoolbox',
-    script: 'server.js',
-    instances: 1,
-    autorestart: true,
-    watch: false,
-    max_memory_restart: '2G',
-    env: {
-      NODE_ENV: 'production',
-      TZ: 'Asia/Shanghai'
-    }
-  }]
+  apps: [
+    {
+      name: "vcptoolbox",
+      script: "server.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "2G",
+      env: {
+        NODE_ENV: "production",
+        TZ: "Asia/Shanghai",
+      },
+    },
+  ],
 };
 ```
 
@@ -341,13 +345,13 @@ services:
     build: .
     container_name: vcptoolbox
     ports:
-      - "6005:6005"          # HTTP API 端口
+      - "6005:6005" # HTTP API 端口
     environment:
       TZ: ${DEFAULT_TIMEZONE:-Asia/Shanghai}
     volumes:
-      - .:/usr/src/app       # 全量挂载 (开发模式)
-      - /usr/src/app/pydeps  # Python 依赖 (匿名卷)
-      - /usr/src/app/node_modules  # Node 依赖 (匿名卷)
+      - .:/usr/src/app # 全量挂载 (开发模式)
+      - /usr/src/app/pydeps # Python 依赖 (匿名卷)
+      - /usr/src/app/node_modules # Node 依赖 (匿名卷)
     restart: unless-stopped
 ```
 
@@ -359,15 +363,15 @@ services:
 volumes:
   # 配置文件
   - ./config.env:/usr/src/app/config.env:ro
-  
+
   # 数据目录
   - ./dailynote:/usr/src/app/dailynote
   - ./image:/usr/src/app/image
   - ./VectorStore:/usr/src/app/VectorStore
-  
+
   # 日志目录
   - ./Plugin/VCPLog/log:/usr/src/app/Plugin/VCPLog/log
-  
+
   # 保持依赖独立
   - /usr/src/app/node_modules
   - /usr/src/app/pydeps
@@ -430,36 +434,36 @@ docker images vcptoolbox
 
 ### 5.1 必需配置项
 
-| 配置项 | 说明 | 示例 |
-|--------|------|------|
-| `API_Key` | 后端 AI 服务 API 密钥 | `sk-xxxx...` |
-| `API_URL` | 后端 AI 服务地址 | `https://api.openai.com` |
-| `PORT` | VCP 服务端口 | `6005` |
-| `Key` | VCP API 访问密钥 | `your_secret_key` |
-| `VCP_Key` | WebSocket 认证密钥 | `your_vcp_key` |
-| `AdminUsername` | 管理面板用户名 | `admin` |
-| `AdminPassword` | 管理面板密码 | `your_strong_password` |
+| 配置项          | 说明                  | 示例                     |
+| --------------- | --------------------- | ------------------------ |
+| `API_Key`       | 后端 AI 服务 API 密钥 | `sk-xxxx...`             |
+| `API_URL`       | 后端 AI 服务地址      | `https://api.openai.com` |
+| `PORT`          | VCP 服务端口          | `6005`                   |
+| `Key`           | VCP API 访问密钥      | `your_secret_key`        |
+| `VCP_Key`       | WebSocket 认证密钥    | `your_vcp_key`           |
+| `AdminUsername` | 管理面板用户名        | `admin`                  |
+| `AdminPassword` | 管理面板密码          | `your_strong_password`   |
 
 ### 5.2 可选配置项
 
-| 配置项 | 说明 | 默认值 |
-|--------|------|--------|
-| `Image_Key` | 图片服务访问密钥 | - |
-| `File_Key` | 文件服务访问密钥 | - |
-| `WeatherKey` | 和风天气 API 密钥 | - |
-| `TavilyKey` | Tavily 搜索 API 密钥 | - |
-| `SILICONFLOW_API_KEY` | 硅基流动 API 密钥 | - |
-| `BILIBILI_COOKIE` | B站 Cookie | - |
-| `DebugMode` | 调试模式 | `false` |
+| 配置项                | 说明                 | 默认值  |
+| --------------------- | -------------------- | ------- |
+| `Image_Key`           | 图片服务访问密钥     | -       |
+| `File_Key`            | 文件服务访问密钥     | -       |
+| `WeatherKey`          | 和风天气 API 密钥    | -       |
+| `TavilyKey`           | Tavily 搜索 API 密钥 | -       |
+| `SILICONFLOW_API_KEY` | 硅基流动 API 密钥    | -       |
+| `BILIBILI_COOKIE`     | B 站 Cookie          | -       |
+| `DebugMode`           | 调试模式             | `false` |
 
 ### 5.3 知识库配置
 
-| 配置项 | 说明 | 默认值 |
-|--------|------|--------|
-| `VECTORDB_DIMENSION` | 向量维度 | `3072` |
-| `KNOWLEDGEBASE_ROOT_PATH` | 知识库根目录 | `./dailynote` |
-| `KNOWLEDGEBASE_STORE_PATH` | 向量存储目录 | `./VectorStore` |
-| `KNOWLEDGEBASE_FULL_SCAN_ON_STARTUP` | 启动时全量扫描 | `true` |
+| 配置项                               | 说明           | 默认值          |
+| ------------------------------------ | -------------- | --------------- |
+| `VECTORDB_DIMENSION`                 | 向量维度       | `3072`          |
+| `KNOWLEDGEBASE_ROOT_PATH`            | 知识库根目录   | `./dailynote`   |
+| `KNOWLEDGEBASE_STORE_PATH`           | 向量存储目录   | `./VectorStore` |
+| `KNOWLEDGEBASE_FULL_SCAN_ON_STARTUP` | 启动时全量扫描 | `true`          |
 
 ### 5.4 安全配置检查
 
@@ -620,11 +624,11 @@ sudo chown -R 1000:1000 ./dailynote ./image ./VectorStore
 
 ### 6.2 日志位置
 
-| 日志类型 | 位置 | 说明 |
-|----------|------|------|
-| 主服务日志 | 控制台 / PM2 | 启动、请求、错误 |
-| VCPLog 插件 | `Plugin/VCPLog/log/` | 工具调用记录 |
-| PM2 日志 | `~/.pm2/logs/` | PM2 管理的进程日志 |
+| 日志类型    | 位置                 | 说明               |
+| ----------- | -------------------- | ------------------ |
+| 主服务日志  | 控制台 / PM2         | 启动、请求、错误   |
+| VCPLog 插件 | `Plugin/VCPLog/log/` | 工具调用记录       |
+| PM2 日志    | `~/.pm2/logs/`       | PM2 管理的进程日志 |
 
 ```bash
 # 查看实时日志
@@ -705,12 +709,12 @@ top -p $(pgrep -f "node server.js")
 
 ### 7.2 关键指标
 
-| 指标 | 正常范围 | 警告阈值 | 说明 |
-|------|----------|----------|------|
-| CPU 使用率 | < 50% | > 80% | 持续高 CPU 可能需要扩容 |
-| 内存使用 | < 70% | > 85% | Node.js 默认 ~1.4GB 限制 |
-| 响应时间 | < 500ms | > 2s | API 响应延迟 |
-| 并发连接 | 根据配置 | - | WebSocket 连接数 |
+| 指标       | 正常范围 | 警告阈值 | 说明                     |
+| ---------- | -------- | -------- | ------------------------ |
+| CPU 使用率 | < 50%    | > 80%    | 持续高 CPU 可能需要扩容  |
+| 内存使用   | < 70%    | > 85%    | Node.js 默认 ~1.4GB 限制 |
+| 响应时间   | < 500ms  | > 2s     | API 响应延迟             |
+| 并发连接   | 根据配置 | -        | WebSocket 连接数         |
 
 ### 7.3 PM2 监控
 
@@ -752,14 +756,17 @@ grep "POST /v1/chat" ~/.pm2/logs/vcptoolbox-out.log | wc -l
 **常见瓶颈：**
 
 1. **内存不足**
+
    - 症状：频繁 GC，响应慢
    - 解决：增加 `--max-old-space-size` 或物理内存
 
 2. **CPU 瓶颈**
+
    - 症状：高 CPU 使用率，请求排队
    - 解决：启用集群模式或水平扩展
 
 3. **I/O 瓶颈**
+
    - 症状：数据库/文件操作慢
    - 解决：使用 SSD，优化索引
 
@@ -780,6 +787,7 @@ grep "POST /v1/chat" ~/.pm2/logs/vcptoolbox-out.log | wc -l
 两套 bundled SQLite runtime 共同访问。WAL 模式下存在两类致命风险：
 
 1. **同进程第二套 SQLite runtime 的 readwrite first-attach**
+
    - POSIX `fcntl` 锁按进程记录，不同 bundled runtime 无法可靠识别同进程另一
      runtime 持有的 DMS 锁。
    - readwrite first-attach 可能缩短并重建 `-shm`；另一 runtime 若仍映射旧长度，
@@ -816,15 +824,15 @@ Rust keepalive 建立后，进程存活期间禁止对同一路径执行在线
 
 ### 8.1 需要备份的数据
 
-| 目录/文件 | 说明 | 优先级 |
-|-----------|------|--------|
-| `config.env` | 主配置文件 | 高 |
-| `dailynote/` | 知识库/日记数据 | 高 |
-| `VectorStore/` | 向量索引 | 高 |
-| `Agent/` | Agent 配置 | 中 |
-| `TVStxt/` | 自定义变量文件 | 中 |
-| `image/` | 媒体资源 | 中 |
-| `Plugin/*/config.env` | 插件配置 | 中 |
+| 目录/文件             | 说明            | 优先级 |
+| --------------------- | --------------- | ------ |
+| `config.env`          | 主配置文件      | 高     |
+| `dailynote/`          | 知识库/日记数据 | 高     |
+| `VectorStore/`        | 向量索引        | 高     |
+| `Agent/`              | Agent 配置      | 中     |
+| `TVStxt/`             | 自定义变量文件  | 中     |
+| `image/`              | 媒体资源        | 中     |
+| `Plugin/*/config.env` | 插件配置        | 中     |
 
 ### 8.2 备份脚本
 
@@ -886,6 +894,7 @@ pm2 start vcptoolbox
 VCP 提供专用备份系统：[VCPBackUpDEV](https://github.com/lioensky/VCPBcakUpDEV)
 
 功能：
+
 - 自动备份整个分布式系统
 - 支持定时备份和增量备份
 - 一键恢复功能
@@ -894,59 +903,45 @@ VCP 提供专用备份系统：[VCPBackUpDEV](https://github.com/lioensky/VCPBca
 
 ## 9. 升级与迁移
 
+> **生产 / 客户 / CLI Agent 升级唯一真源：** [PRODUCTION_UPGRADE_SOP.md](./PRODUCTION_UPGRADE_SOP.md)  
+> 详细本机 runbook：[UPSTREAM_STASH_PULL_POP_CHECKLIST.md](./UPSTREAM_STASH_PULL_POP_CHECKLIST.md)  
+> 开发者向上游提 PR（rebase）：[VCPToolbox 更新与配置管理流程.txt](./VCPToolbox更新与配置管理流程.txt)  
+> 根目录 `update.bat` / `update_with_no_dependency.bat` **已改为安全拦截**，不会执行裸 `git pull`。
+
+硬门禁摘要（全文以生产 SOP 为准）：
+
+- 仓库外备份 `config.env` 与 `Plugin/AgentAssistant/config.json`（`git stash -u` **保护不了** ignore 文件）
+- `npx pm2 stop vcp-main vcp-admin` 后再换盘（没有名为 `VCPToolBox` 的 PM2 应用）
+- `git fetch upstream main` + `git merge --ff-only upstream/main`；不能快进则停，禁止无 TTY rebase
+- 对照 `config.env.example` **补缺键**，禁止整文件覆盖；UTF-8 无 BOM
+- 探针：`http://127.0.0.1:6005/health` 允许 **200 或 401**；`http://127.0.0.1:6006/AdminPanel` 期望 **200**
+- 失败只停机报警；**禁止**自动 `git reset --hard`
+
 ### 9.1 升级前准备
 
+见 [PRODUCTION_UPGRADE_SOP.md](./PRODUCTION_UPGRADE_SOP.md) Phase 1–2。不要使用仓库内不存在的 `./backup.sh` 作为唯一备份。
+
 ```bash
-# 1. 备份当前版本
-./backup.sh
-
-# 2. 记录当前版本
-git log -1 > /backup/vcptoolbox/version_$(date +%Y%m%d).txt
-
-# 3. 检查更新内容
-git fetch origin
-git log HEAD..origin/main --oneline
+# 记录当前版本
+git rev-parse HEAD
+git status -sb
+git remote -v
 ```
 
 ### 9.2 升级步骤
 
-```bash
-# 1. 停止服务
-pm2 stop vcptoolbox
-
-# 2. 拉取最新代码
-git pull origin main
-
-# 3. 更新依赖
-npm install
-pip install -r requirements.txt
-
-# 4. 更新插件依赖
-find Plugin -name package.json -exec sh -c '
-    for pkg_file do
-        plugin_dir=$(dirname "$pkg_file")
-        (cd "$plugin_dir" && npm install --legacy-peer-deps)
-    done
-' sh {} +
-
-# 5. 检查配置文件变更
-diff config.env.example config.env
-
-# 6. 重启服务
-pm2 start vcptoolbox
-
-# 7. 验证服务
-curl http://localhost:6005/health
-```
+完整命令、Windows/Linux 分栏、配置补缺与门禁见生产 SOP。**不要**再执行 `git pull origin main` 或 `pm2 stop vcptoolbox`。
 
 ### 9.3 Docker 升级
 
+代码拉取仍须遵守生产 SOP（`fetch` + `merge --ff-only`、仓库外备份）。下面仅覆盖镜像重建；**不要**用裸 `git pull origin main` 代替 SOP。
+
 ```bash
-# 1. 备份配置
+# 1. 备份配置到仓库外（示例）
 cp config.env config.env.bak
 
-# 2. 拉取最新代码
-git pull origin main
+# 2. 按 PRODUCTION_UPGRADE_SOP.md 快进上游后再构建
+# git fetch upstream main && git merge --ff-only upstream/main
 
 # 3. 重建镜像
 docker-compose build --no-cache

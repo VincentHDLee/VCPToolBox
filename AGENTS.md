@@ -29,41 +29,42 @@ VCPToolBox/
 
 ## 快速定位
 
-| 任务 | 位置 | 说明 |
-|------|------|------|
-| 启动与初始化 | `server.js` | 环境加载、中间件、路由挂载、启动顺序 |
-| 插件执行链路 | `Plugin.js` | manifest 解析、同步/异步/静态执行 |
-| 分布式工具 | `WebSocketServer.js`, `FileFetcherServer.js` | 节点注册、远程执行、跨节点文件透明预处理 |
-| 安全敏感面 | `server.js`, `Plugin.js`, `routes/adminPanelRoutes.js` | 鉴权、shell 执行、管理控制接口 |
-| 变量替换流程 | `modules/messageProcessor.js` | 提示词与占位符多阶段注入管线 |
-| Agent 文件映射 | `modules/agentManager.js` | `agent_map.json` 与热更新监听 |
-| 多协议适配 | `routes/protocolBridge.js` | OpenAI/Anthropic/Gemini → 统一格式 |
-| 管理面板后端 | `routes/adminPanelRoutes.js` + `routes/admin/` | 面板配置/系统控制类接口 |
-| 特殊模型路由 | `routes/specialModelRouter.js` | 图像/向量白名单透传 |
-| 插件协议样例 | `Plugin/*/plugin-manifest.json` | 各类插件本地约定 |
-| 容器行为 | `Dockerfile`, `docker-compose.yml` | 运行用户、挂载策略、依赖安装方式 |
+| 任务           | 位置                                                   | 说明                                     |
+| -------------- | ------------------------------------------------------ | ---------------------------------------- |
+| 启动与初始化   | `server.js`                                            | 环境加载、中间件、路由挂载、启动顺序     |
+| 插件执行链路   | `Plugin.js`                                            | manifest 解析、同步/异步/静态执行        |
+| 分布式工具     | `WebSocketServer.js`, `FileFetcherServer.js`           | 节点注册、远程执行、跨节点文件透明预处理 |
+| 安全敏感面     | `server.js`, `Plugin.js`, `routes/adminPanelRoutes.js` | 鉴权、shell 执行、管理控制接口           |
+| 变量替换流程   | `modules/messageProcessor.js`                          | 提示词与占位符多阶段注入管线             |
+| Agent 文件映射 | `modules/agentManager.js`                              | `agent_map.json` 与热更新监听            |
+| 多协议适配     | `routes/protocolBridge.js`                             | OpenAI/Anthropic/Gemini → 统一格式       |
+| 管理面板后端   | `routes/adminPanelRoutes.js` + `routes/admin/`         | 面板配置/系统控制类接口                  |
+| 特殊模型路由   | `routes/specialModelRouter.js`                         | 图像/向量白名单透传                      |
+| 插件协议样例   | `Plugin/*/plugin-manifest.json`                        | 各类插件本地约定                         |
+| 容器行为       | `Dockerfile`, `docker-compose.yml`                     | 运行用户、挂载策略、依赖安装方式         |
 
 ## 代码映射
 
-| 符号/文件 | 类型 | 位置 | 作用 |
-|-----------|------|------|------|
-| `startServer` | 函数 | `server.js` | 最终启动门控（`app.listen` 前） |
-| `PluginManager` | 类 | `Plugin.js` | 插件注册、配置合并与执行分发 |
-| `initialize` | 函数 | `WebSocketServer.js` | 分布式 WebSocket 桥初始化 |
-| `fetchFile` | 函数 | `FileFetcherServer.js` | 工具执行时的跨节点文件透明预处理 |
-| `KnowledgeBaseManager` | 类/单例 | `KnowledgeBaseManager.js` | 向量库与 RAG 管线总控 |
-| `ChatCompletionHandler` | 类 | `modules/chatCompletionHandler.js` | 对话主流程 23 步编排 |
-| `AgentManager` | 类 | `modules/agentManager.js` | 别名映射、缓存与热更新监听 |
-| `DynamicToolRegistry` | 类 | `modules/dynamicToolRegistry.js` | 动态工具注册、分类与按需注入 |
+| 符号/文件               | 类型    | 位置                               | 作用                             |
+| ----------------------- | ------- | ---------------------------------- | -------------------------------- |
+| `startServer`           | 函数    | `server.js`                        | 最终启动门控（`app.listen` 前）  |
+| `PluginManager`         | 类      | `Plugin.js`                        | 插件注册、配置合并与执行分发     |
+| `initialize`            | 函数    | `WebSocketServer.js`               | 分布式 WebSocket 桥初始化        |
+| `fetchFile`             | 函数    | `FileFetcherServer.js`             | 工具执行时的跨节点文件透明预处理 |
+| `KnowledgeBaseManager`  | 类/单例 | `KnowledgeBaseManager.js`          | 向量库与 RAG 管线总控            |
+| `ChatCompletionHandler` | 类      | `modules/chatCompletionHandler.js` | 对话主流程 23 步编排             |
+| `AgentManager`          | 类      | `modules/agentManager.js`          | 别名映射、缓存与热更新监听       |
+| `DynamicToolRegistry`   | 类      | `modules/dynamicToolRegistry.js`   | 动态工具注册、分类与按需注入     |
 
 ## 约定
 
 - **扁平根目录**：运行时目录刻意保持根层扁平，不要假设存在 `src/` 体系。
 - **配置层级**：全局配置来自 `config.env`（模板 `config.env.example`）；插件可在各自目录覆盖配置。
+- **升级文档**：生产/客户/CLI Agent 只走 `docs/PRODUCTION_UPGRADE_SOP.md`；开发者 PR rebase 才用 `docs/VCPToolbox更新与配置管理流程.txt`。禁止裸 `git pull`（`update.bat` 已拦截）。
 - **插件契约**：插件契约文件固定为 `plugin-manifest.json`；禁用插件用 `.json.block` 后缀。
 - **六种插件类型**：static, messagePreprocessor, synchronous, asynchronous, service, hybridservice。
 - **静态插件占位符**：通过 `systemPromptPlaceholders` 暴露能力，通常以 `{{VCP...}}` 注入。
-- **VCP工具协议**：使用中文分隔符 `「始」「末」` 的自定义块语法（`<<<[TOOL_REQUEST]>>>`），不是 OpenAI function-calling。
+- **VCP 工具协议**：使用中文分隔符 `「始」「末」` 的自定义块语法（`<<<[TOOL_REQUEST]>>>`），不是 OpenAI function-calling。
 - **变量系统**：支持 `{{Agent*}}`, `{{Tar*}}`, `{{Var*}}`, `{{Sar*}}` 四类自定义变量，可从 `TVStxt/*.txt` 加载外部文件。
 - **多运行时**：Node.js + Python + Rust 混合架构，插件可用任意语言实现。
 - **无正式测试**：根 `package.json` 的 `npm test` 是占位脚本，项目采用生产验证而非单元测试。
@@ -118,6 +119,7 @@ docker-compose logs -f
 ## 复杂插件说明
 
 Plugin/ 目录中部分插件因规模或复杂度较高（多文件、多层子目录、多语言混合），在开发或审计时可能需要单独深入理解。典型特征包括：
+
 - 文件数 >10 或含多层子目录
 - 多语言混合（JS + Python）
 - 拥有独立的内部路由或服务架构
@@ -127,26 +129,31 @@ Plugin/ 目录中部分插件因规模或复杂度较高（多文件、多层子
 ## 📖 深度学习资源
 
 **首次接触 VCPToolBox：**
+
 1. [docs/DOCUMENTATION_INDEX.md](./docs/DOCUMENTATION_INDEX.md) — 文档导航总览
 2. [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) — 系统架构与启动序列
 3. [docs/PLUGIN_ECOSYSTEM.md](./docs/PLUGIN_ECOSYSTEM.md) — 插件生态完整规范
 
 **开发新功能：**
-1. [docs/VCP同步异步插件开发手册.md](./docs/VCP同步异步插件开发手册.md) — 插件开发全流程教程
+
+1. [docs/VCP 同步异步插件开发手册.md](./docs/VCP同步异步插件开发手册.md) — 插件开发全流程教程
 2. [docs/FEATURE_MATRIX.md](./docs/FEATURE_MATRIX.md) — 查找类似功能实现
 3. [docs/CONTEXT_BRIDGE.md](./docs/CONTEXT_BRIDGE.md) — 插件间向量能力共享
 
 **排查问题：**
+
 1. [docs/OPERATIONS.md](./docs/OPERATIONS.md) — 运维部署与故障排查
 2. [docs/CONFIGURATION.md](./docs/CONFIGURATION.md) — 配置参数与风险警告
 3. [docs/API_ROUTES.md](./docs/API_ROUTES.md) — HTTP 端点与认证机制
 
 **记忆/RAG 系统：**
-1. [docs/VCP记忆管理系统.md](./docs/VCP记忆管理系统.md) — 记忆系统上手指南
+
+1. [docs/VCP 记忆管理系统.md](./docs/VCP记忆管理系统.md) — 记忆系统上手指南
 2. [docs/TagMemo_Wave_Algorithm_Deep_Dive.md](./docs/TagMemo_Wave_Algorithm_Deep_Dive.md) — 浪潮算法数学原理
 3. [docs/MEMORY_SYSTEM.md](./docs/MEMORY_SYSTEM.md) — 记忆系统架构概览
 
 **其他专项：**
+
 - [docs/DISTRIBUTED_ARCHITECTURE.md](./docs/DISTRIBUTED_ARCHITECTURE.md) — 分布式 WebSocket 协议
 - [docs/RUST_VECTOR_ENGINE.md](./docs/RUST_VECTOR_ENGINE.md) — N-API 向量引擎
 - [docs/FRONTEND_COMPONENTS.md](./docs/FRONTEND_COMPONENTS.md) — AdminPanel 与前端集成

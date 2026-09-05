@@ -154,6 +154,10 @@ preprocessor_order.json
 tag-processor-config.env
 # 多模态识别 JSON 真相源（首启自动生成；私密提示词不应入库）
 multimodal-config.json
+# AgentAssistant 运行时角色表（含密钥/私有 agent；上游仅保留 config.env.example）
+Plugin/AgentAssistant/config.json
+Plugin/AgentAssistant/*.bak_aa_*
+Plugin/AgentAssistant/config.json.bak*
 
 # ===== 运行时数据 / 缓存 =====
 *.sqlite
